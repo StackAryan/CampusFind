@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-cream: #f7f3e9;
+  --color-paper: #fffcf5;
+  --color-ink: #18211c;
+  --color-moss: #0e5f4e;
+  --color-moss-dark: #0a493c;
+  --color-moss-soft: #dcefe7;
+  --color-coral: #d64f2b;
+  --color-coral-soft: #fbe5dd;
+  --color-gold: #dfa83c;
+  --color-gold-soft: #f9eed5;
+  --color-sand: #ece4d4;
+  --color-line: #e4ddce;
+  --color-muted: #68716a;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-cream font-sans text-ink antialiased;
+  }
+
+  ::selection {
+    background: var(--color-gold-soft);
+    color: var(--color-ink);
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-moss);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-3xl border border-line bg-paper shadow-[0_18px_45px_-32px_rgba(24,33,28,0.45)];
+  }
+
+  .btn,
+  .btn-primary,
+  .btn-coral,
+  .btn-outline,
+  .btn-ghost {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition duration-200 disabled:cursor-not-allowed disabled:opacity-55;
+  }
+
+  .btn-primary {
+    @apply bg-moss text-white hover:bg-moss-dark active:scale-[0.98];
+  }
+
+  .btn-coral {
+    @apply bg-coral text-white hover:bg-coral/90 active:scale-[0.98];
+  }
+
+  .btn-outline {
+    @apply border border-ink/15 bg-paper text-ink hover:border-ink/30 hover:bg-cream active:scale-[0.98];
+  }
+
+  .btn-ghost {
+    @apply text-ink/70 hover:bg-ink/5 hover:text-ink;
+  }
+
+  .input {
+    @apply w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition placeholder:text-ink/35 focus:border-moss focus:ring-4 focus:ring-moss/10;
+  }
+
+  .label {
+    @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-ink/55;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold;
+  }
+
+  .link-underline {
+    @apply underline decoration-moss/40 decoration-2 underline-offset-4 hover:decoration-moss;
+  }
+}
+
+@utility dot-grid {
+  background-image: radial-gradient(circle, rgba(24, 33, 28, 0.13) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-rise {
+  animation: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@utility animate-toast {
+  animation: toast-in 0.25s ease-out both;
+}
