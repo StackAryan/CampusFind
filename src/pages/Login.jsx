@@ -13,7 +13,6 @@ import StudentOtpForm from '../components/StudentOtpForm'
 import { Spinner } from '../components/Loading'
 import { useAuth } from '../context/useAuth'
 import { isDemoMode } from '../lib/api'
-import { STUDENT_EMAIL_SUFFIX } from '../lib/auth-domain'
 import { cn } from '../lib/utils'
 import { toast } from '../lib/toast'
 
@@ -70,15 +69,14 @@ export default function Login() {
   return (
     <AuthShell
       title="Welcome back"
-      subtitle="Sign in with a single-use link sent to your student email, or as an administrator."
+      subtitle="Sign in with a single-use link sent to your email, or as an administrator."
       footer={
         tab === 'admin' ? (
           <>Administrator access is restricted to the single approved admin account.</>
         ) : (
           <>
-            Student access is limited to{' '}
-            <span className="font-semibold text-ink">{STUDENT_EMAIL_SUFFIX}</span> Outlook
-            accounts.
+            Student access uses a passwordless sign-in link sent to{' '}
+            <span className="font-semibold text-ink">any email address you control</span>.
           </>
         )
       }
@@ -134,7 +132,7 @@ export default function Login() {
                   type="email"
                   autoComplete="email"
                   className="input"
-                  placeholder="admin@yourcollege.ac.in"
+                  placeholder="admin@example.com"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   disabled={submitting}

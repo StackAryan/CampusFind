@@ -6,9 +6,9 @@ Students report lost or found belongings, search the campus board, see automatic
 scored potential matches, and submit ownership claims. Administrators verify claims,
 approve recoveries, monitor the board and oversee student accounts.
 
-Student access is passwordless: a single-use sign-in link is sent to an official
-`@stu.adamasuniversity.ac.in` Outlook address (emails can also carry a six-digit code when
-the template includes it). Administrator access stays on a single email/password account.
+Student access is passwordless: a single-use sign-in link is sent to any email address the
+student controls (emails can also carry a six-digit code when the template includes it).
+Administrator access stays on a single email/password account.
 
 Built as an interdisciplinary course project with **React + Vite + Tailwind CSS** on the
 frontend and **Supabase Auth, PostgreSQL, Storage and Realtime** behind it. Deployable to
@@ -56,8 +56,8 @@ restores the original seed. Demo data is stored in `localStorage` under
 `campusfind_demo_v2`, and photos are compressed and stored as data URLs.
 
 In demo mode no email is sent. The student login displays and accepts the fixed verification
-code **123456** for any valid `@stu.adamasuniversity.ac.in` address. The administrator demo
-uses a normal email/password account.
+code **123456** for any valid email address. The administrator demo uses a normal
+email/password account.
 
 When you are ready for the real cloud backend, follow [Connect Supabase](#connect-supabase).
 The UI, routes and features are identical — only the data layer swaps.
@@ -66,13 +66,13 @@ The UI, routes and features are identical — only the data layer swaps.
 
 | Role | Credentials |
 | --- | --- |
-| Student (Avery Johnson) | `avery.johnson@stu.adamasuniversity.ac.in` + code `123456` |
+| Student (Avery Johnson) | `avery.johnson@example.com` + code `123456` |
 | Administrator | `admin@campus.edu` / `admin123` |
 
 The login page has two tabs:
 
-- **Student** — enter a student Outlook address, then open the single-use sign-in link
-  from the email (a six-digit code can also be entered if the email contains one).
+- **Student** — enter any email address, then open the single-use sign-in link from the
+  email (a six-digit code can also be entered if the email contains one).
 - **Administrator** — email and password for the single admin account.
 
 The seed contains 13 reports across campus, 3 pending claims, 1 approved recovery, and
@@ -80,7 +80,7 @@ notifications. The demo is intentionally small but covers every screen and workf
 
 A good presentation flow:
 
-1. Sign in through the **Student** tab with `avery.johnson@stu.adamasuniversity.ac.in` and
+1. Sign in through the **Student** tab with `avery.johnson@example.com` and
    demo code `123456`.
 2. Open **Matches** — see scored lost/found pairs and their reason breakdown.
 3. Search the board for “Hydro”, open the found bottle, and submit a claim.
@@ -95,7 +95,7 @@ A good presentation flow:
 ### Phase 1 — Core
 
 - Passwordless student login using a single-use email link (plus optional 6-digit code)
-  restricted to `@stu.adamasuniversity.ac.in` Outlook mailboxes
+  sent to any email address
 - Separate email/password login for the single administrator account
 - Student dashboard with reports, claims and live status
 - Report lost items / report found items with photo uploads
@@ -125,7 +125,7 @@ Remaining ideas for extra credit are listed in [Roadmap](#roadmap).
 | --- | --- |
 | React 19 + Vite | SPA frontend, routing, lazy-loaded pages |
 | Tailwind CSS 4 | Design system and responsive styling |
-| Supabase Auth | Passwordless student email link/OTP and administrator email/password |
+| Supabase Auth | Passwordless email link/OTP sign-in and administrator email/password |
 | Supabase PostgreSQL | Items, claims, profiles, notifications |
 | Supabase Storage | Item photos (`item-photos` bucket) |
 | Supabase Realtime | Live item, claim and notification updates |
@@ -139,33 +139,20 @@ components.
 
 ## How student authentication works
 
-1. The student enters their official Adamas Outlook address on the **Student** tab.
-2. The browser rejects anything that does not end in `@stu.adamasuniversity.ac.in`.
+1. The student enters any email address on the **Student** tab.
+2. The browser checks that it looks like a valid email address.
 3. Supabase sends a single-use sign-in link to that mailbox. The link lands back on the app
    (the **Site URL** configured in Supabase), where `supabase-js` picks up the session.
 4. On first login the account and `student` profile are created automatically. If the email
    also contains a six-digit code (template includes `{{ .Token }}`), the student can expand
    **Have a 6-digit code?** and type it instead of clicking the link.
-5. The domain rule is also enforced inside PostgreSQL by a `BEFORE INSERT` / `BEFORE UPDATE`
-   trigger on `auth.users`, so calling the API directly cannot create an account with another
-   domain.
+5. There is no domain restriction: any valid email address can sign up. The latest migration
+   removes the old university-domain trigger from `auth.users`.
 6. Administrator login is a separate tab using the one admin email/password account. The app
    checks the profile role and rejects non-administrator accounts.
 
 Demo mode uses the fixed code `123456` and does not send email, so it keeps the code-entry
 step.
-
-### What about logging in through the Adamas portal?
-
-The official Adamas student portal does not expose an SSO/OAuth/SAML callback, sends
-`X-Frame-Options: SAMEORIGIN` and a frame-buster, and keeps its session on its own domain.
-A browser therefore cannot tell CampusFind when a student has logged in there. Capturing
-portal passwords and replaying them through our server would be unsafe and requires
-university authorization, so CampusFind deliberately does not do that.
-
-Instead, student access is verified by proving control of the official university mailbox.
-The login page links to the Adamas portal for account management only. If the university
-later provides an SSO endpoint, it can replace the email link/code step.
 
 ---
 
@@ -183,10 +170,12 @@ Open **SQL Editor** in the Supabase dashboard and run the files in
 
 1. `20260101000000_init.sql` — tables, indexes, claim triggers, RLS, storage bucket and
    realtime publication.
-2. `20261122000000_student_email_verification.sql` — enforces the student email domain and
-   creates the admin signup allowlist.
+2. `20261122000000_student_email_verification.sql` — legacy Adamas domain restriction and
+   signup allowlist (kept for migration history; superseded by the next file).
+3. `20261124000000_allow_any_email.sql` — removes the domain restriction and allowlist so
+   any valid email address can sign up.
 
-With the Supabase CLI, both run automatically:
+With the Supabase CLI, all three run automatically:
 
 ```bash
 supabase link --project-ref <your-project-ref>
@@ -197,17 +186,21 @@ supabase db push
 > a project where they are already published, remove those three `alter publication` lines
 > before running.
 
-### 3. Configure student email delivery
+### 3. Configure email delivery
 
 CampusFind sends sign-in emails through Supabase Auth. A few dashboard settings are required:
 
-1. Open **Authentication → URL Configuration** and set **Site URL** to the app. Use
-   `http://localhost:5173/login` while developing and the Vercel URL after deploying. This is
-   where the sign-in link returns the student, so the flow does not work with the default
-   `localhost:3000`.
-2. The default Supabase auth email already contains a working **magic link**, so the primary
+1. Open **Authentication → Sign In / Providers → Email** and make sure the Email provider is
+   enabled and **Allow new users to sign up** is on. This lets first-time students create an
+   account through the sign-in link.
+2. Open **Authentication → URL Configuration** and set **Site URL** to the app. Use
+   `http://localhost:5173/login` while developing and the Vercel URL after deploying. Add the
+   same origins under **Redirect URLs** (`http://localhost:5173/**` and
+   `https://your-app.vercel.app/**`). This is where the sign-in link returns the student, so
+   the flow does not work with the default `localhost:3000`.
+3. The default Supabase auth email already contains a working **magic link**, so the primary
    flow works without editing templates. Keep the default **Magic link or OTP** template.
-3. Optional: to also let students type a six-digit code, open **Authentication → Emails →
+4. Optional: to also let students type a six-digit code, open **Authentication → Emails →
    Magic link or OTP** and add `{{ .Token }}` to the body. Example:
 
    ```html
@@ -217,14 +210,15 @@ CampusFind sends sign-in emails through Supabase Auth. A few dashboard settings 
    ```
 
    Set the subject to something like **Your CampusFind sign-in code**.
-4. Configure **custom SMTP** before real use. Supabase's built-in email service is heavily
+5. Configure **custom SMTP** before real use. Supabase's built-in email service is heavily
    rate-limited (a few messages per hour) and is intended for testing, not a live campus app.
-   Resend, SendGrid, Postmark or the university mail relay all work as SMTP providers. On new
+   Resend, SendGrid, Postmark or your own mail relay all work as SMTP providers. On new
    free-tier projects created after June 2026, custom SMTP is also required before auth email
    templates can be edited at all.
-5. Ask students to check their Outlook spam/junk folder the first time.
+6. Ask users to check their spam/junk folder the first time, especially for Outlook or
+   university mailboxes that filter external senders.
 
-Sign-in links are single-use and expire; students can request a new link from the login page.
+Sign-in links are single-use and expire; users can request a new link from the login page.
 
 ### 4. Add environment variables
 
@@ -245,34 +239,27 @@ Restart the dev server. The **Demo mode** chip disappears and the app uses Supab
 
 ### 5. Create the administrator account
 
-New signups outside `@stu.adamasuniversity.ac.in` are blocked. The single administrator must
-be allowlisted **before** the account is created:
-
-```sql
-insert into public.signup_allowlist (email, note)
-values ('admin@yourcollege.ac.in', 'CampusFind administrator');
-```
-
-Then create that user with a password in **Authentication → Users → Add user** and turn on
-**Auto Confirm User** (or create it via the Supabase Admin API), and promote the profile:
+Signup is open to any valid email address, so no allowlist step is required. Create the
+administrator user with a password in **Authentication → Users → Add user**, turn on
+**Auto Confirm User** (or create it via the Supabase Admin API), then promote the profile:
 
 ```sql
 update public.profiles
 set role = 'admin'
 where id = (
-  select id from auth.users where email = 'admin@yourcollege.ac.in'
+  select id from auth.users where email = 'admin@example.com'
 );
 ```
 
 Sign in through the **Administrator** tab at `/login?tab=admin`.
 
-- The allowlist only permits the account to be created; it does **not** grant the admin role.
 - Roles are protected by a separate trigger. Students cannot promote themselves through the
   API. SQL editor commands run without a user JWT, so the promotion above is allowed.
-- If the administrator uses a `@stu.adamasuniversity.ac.in` address, no allowlist row is
-  needed.
-- To change the student domain later, update both `src/lib/auth-domain.js` and the trigger in
-  `20261122000000_student_email_verification.sql`.
+- Any email domain works for the administrator after the latest migration; the old
+  `signup_allowlist` table is dropped.
+- If you previously applied the Adamas domain migration, make sure
+  `20261124000000_allow_any_email.sql` has run. It drops the `auth.users` triggers and the
+  allowlist table.
 
 ### 6. Storage and realtime
 
@@ -349,18 +336,16 @@ store precomputed matches.
 | `items` | Lost/found reports with title, description, category, location, date, photo and status. |
 | `claims` | Ownership claims with pending/approved/rejected status, review note and reviewer. |
 | `notifications` | In-app notifications with read state and deep link. |
-| `signup_allowlist` | Admin-only list of non-student emails permitted to create accounts. No RLS policies and no API grants. |
 
 Item statuses: `open` → `in_review` (a claim exists) → `resolved` (recovered).
 Claim statuses: `pending` → `approved` / `rejected`.
 
-### Student signup enforcement
+### Email signup policy
 
-Student accounts can only be created with an official
-`@stu.adamasuniversity.ac.in` address. The app checks the domain for a friendly error, and
-the database enforces it independently with a trigger on `auth.users` for both inserts and
-email changes. The `signup_allowlist` table is the only exception, used for the single
-administrator account. It is managed from the SQL editor only.
+Any valid email address can create an account. The app only checks the address format for a
+friendly error, and there is no domain restriction in the database after
+`20261124000000_allow_any_email.sql`. Ownership is proven by receiving the single-use link
+or code. The administrator is distinguished by `profiles.role`, not by email domain.
 
 ### Claim workflow (database triggers)
 
@@ -393,8 +378,8 @@ RLS is enabled on every public table:
   The bucket is public-read for simple image URLs.
 - **Roles:** a trigger blocks non-admin role changes even if someone calls the API
   directly.
-- **Student signup:** a trigger on `auth.users` rejects inserts or email changes outside
-  the student domain unless the address is in `signup_allowlist`.
+- **Signup:** any valid email address may register. The older domain trigger and allowlist
+  are removed by `20261124000000_allow_any_email.sql`.
 - **Administrator login:** checked again in the app, which signs out any non-admin account
   that tries the administrator tab.
 
@@ -415,7 +400,7 @@ campus-lost-found/
 │   ├── lib/
 │   │   ├── api.js         # Single data layer: demo mode ↔ Supabase
 │   │   ├── demo.js        # Seeded localStorage backend for demo mode
-│   │   ├── auth-domain.js # Student email rules and university portal URL
+│   │   ├── auth-domain.js # Email normalization and validation helpers
 │   │   ├── auth-domain.test.js
 │   │   ├── matching.js    # Potential Match Engine (pure functions)
 │   │   ├── matching.test.js
@@ -459,9 +444,9 @@ The match engine and student-email helpers have unit tests covering:
 - resolved, same-owner and weak-match exclusion
 - score thresholds
 - tier labels
-- acceptance of `@stu.adamasuniversity.ac.in` addresses
-- rejection of other domains, malformed addresses and suffix tricks
-- display-name derivation from student emails
+- acceptance of normal email addresses
+- rejection of malformed addresses
+- display-name derivation from email addresses
 
 ```bash
 npm test
@@ -469,9 +454,9 @@ npm test
 
 Manual smoke-test checklist:
 
-- [ ] Request a sign-in link with a non-student email and verify it is rejected
-- [ ] Request a link with a student address, open it, and confirm you land signed in
-- [ ] Sign in with a student email and the demo code, then sign out and back in
+- [ ] Request a sign-in link with a malformed email address and verify it is rejected
+- [ ] Request a link with any normal email address, open it, and confirm you land signed in
+- [ ] Sign in with an email and the demo code, then sign out and back in
 - [ ] Sign in through the Administrator tab with the admin account
 - [ ] Report a lost item with and without a photo
 - [ ] Report a found item; verify it appears on Browse
@@ -508,7 +493,7 @@ Manual smoke-test checklist:
 | Cloud computing | Supabase database/storage/realtime, Vercel deployment, environment configuration |
 | Web development | React components, React Router, responsive Tailwind UI, photo uploads, search filters |
 | Database management | Relational schema, foreign keys, indexes, partial unique index, SQL triggers, analytics queries |
-| Cybersecurity | Passwordless email sign-in link/OTP, student-domain enforcement in the database, RLS policies, protected admin route, role-change trigger, admin-only email RPC, per-user storage folders |
+| Cybersecurity | Passwordless email sign-in link/OTP, email format validation, RLS policies, protected admin route, role-change trigger, admin-only email RPC, per-user storage folders |
 | Software engineering | Phased requirements, documented architecture, unit tests, validation, loading/error/empty states, migration-based setup |
 
 ## Roadmap
@@ -526,8 +511,7 @@ Possible next steps:
 - Admin UI for changing roles (today it is intentionally a SQL-only operation)
 - Private storage bucket with signed URLs for sensitive photos
 - Duplicate-report detection and moderator flagging
-- True Adamas SSO integration if the university provides an OAuth, SAML or signed-token
-  endpoint (the current portal does not)
+- True SSO integration if the university provides an OAuth, SAML or signed-token endpoint
 - Microsoft account sign-in restricted to the university tenant
 
 ## Troubleshooting
@@ -536,10 +520,11 @@ Possible next steps:
 Restart the Vite dev server. Environment variables are read at startup. Make sure the file
 is named `.env` at the project root and both values are set.
 
-**The student sign-in email never arrives.**
-Check the Outlook spam/junk folder and confirm custom SMTP is configured. Supabase's
-built-in email service is heavily rate-limited. The Student tab shows which address the
-link was sent to.
+**The sign-in email never arrives.**
+Check the spam/junk folder and confirm custom SMTP is configured. Supabase's built-in email
+service is heavily rate-limited. The Student tab shows which address the link was sent to.
+Some college mail systems also block external senders, so a normal personal email is the
+most reliable option.
 
 **The sign-in link says invalid or has expired.**
 Links are single-use and time-limited. Request a new one from the login page. Also make sure
@@ -557,14 +542,15 @@ templates cannot be edited with the built-in mailer.
 Supabase is throttling requests. Wait a few minutes or configure custom SMTP for higher
 limits.
 
-**Signup says only @stu.adamasuniversity.ac.in emails can create an account.**
-That is the intended restriction. For the administrator account, add the email to
-`public.signup_allowlist` first (step 5). For a different student domain, update both the
-frontend constant and the SQL trigger.
+**Signup rejects my email address.**
+The app only accepts addresses that look like `name@domain.com`. If an older deployment
+still enforces the Adamas domain, run
+`supabase/migrations/20261124000000_allow_any_email.sql` in the Supabase SQL editor. It drops
+the old `auth.users` triggers and the allowlist table.
 
 **The administrator account cannot be created.**
-Allowlist the email first. The allowlist permits signup only; you still have to create the
-user and promote the profile to `admin`.
+Make sure **Allow new users to sign up** is enabled, or create the user directly in
+**Authentication → Users → Add user** and promote the profile to `admin`.
 
 **The administrator tab says “This account is not an administrator”.**
 Promote the profile with the SQL from step 5, then sign in again. The app signs out accounts
@@ -601,8 +587,8 @@ This is a course project, not a hardened production system:
 
 - Demo mode accepts a fixed OTP (`123456`) and stores the admin password in `localStorage` —
   it is local-only and never meant for real accounts.
-- Student verification proves control of an official student mailbox; it does not check the
-  Adamas portal or the university enrolment database.
+- Student verification proves control of an email address; it does not check the Adamas
+  portal, the university enrolment database, or that the address is a college account.
 - True portal SSO is not possible until the university exposes an API/OAuth/SAML endpoint.
 - Email delivery depends on Supabase SMTP. The built-in mailer is rate-limited and not
   suitable for a live campus rollout.

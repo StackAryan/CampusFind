@@ -1,17 +1,14 @@
-export const STUDENT_EMAIL_DOMAIN = 'stu.adamasuniversity.ac.in'
-export const STUDENT_EMAIL_SUFFIX = `@${STUDENT_EMAIL_DOMAIN}`
-export const UNIVERSITY_PORTAL_URL = 'https://adamasknowledgecity.ac.in/student/login'
 export const DEMO_OTP_CODE = '123456'
+export const DEMO_STUDENT_EMAIL = 'avery.johnson@example.com'
 
 export function normalizeEmail(email) {
   return String(email ?? '').trim().toLowerCase()
 }
 
-export function isStudentEmail(email) {
+export function isValidEmail(email) {
   const normalized = normalizeEmail(email)
-  if (!normalized.endsWith(STUDENT_EMAIL_SUFFIX)) return false
-  const localPart = normalized.slice(0, -STUDENT_EMAIL_SUFFIX.length)
-  return localPart.length > 0 && !localPart.includes('@') && !/\s/.test(localPart)
+  if (normalized.length > 254) return false
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)
 }
 
 export function studentNameFromEmail(email) {

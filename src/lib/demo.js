@@ -1,7 +1,7 @@
 import {
   DEMO_OTP_CODE,
-  STUDENT_EMAIL_SUFFIX,
-  isStudentEmail,
+  DEMO_STUDENT_EMAIL,
+  isValidEmail,
   normalizeEmail,
   studentNameFromEmail,
 } from './auth-domain'
@@ -41,42 +41,42 @@ function makeUser(email, fullName, role, password, createdDaysAgo = 30) {
 function seed() {
   const admin = makeUser('admin@campus.edu', 'Campus Admin', 'admin', 'admin123', 120)
   const avery = makeUser(
-    'avery.johnson@stu.adamasuniversity.ac.in',
+    DEMO_STUDENT_EMAIL,
     'Avery Johnson',
     'student',
     null,
     90,
   )
   const maya = makeUser(
-    'maya.chen@stu.adamasuniversity.ac.in',
+    'maya.chen@example.com',
     'Maya Chen',
     'student',
     'demo1234',
     80,
   )
   const jordan = makeUser(
-    'jordan.ellis@stu.adamasuniversity.ac.in',
+    'jordan.ellis@example.com',
     'Jordan Ellis',
     'student',
     'demo1234',
     75,
   )
   const sam = makeUser(
-    'sam.patel@stu.adamasuniversity.ac.in',
+    'sam.patel@example.com',
     'Sam Patel',
     'student',
     'demo1234',
     60,
   )
   const priya = makeUser(
-    'priya.nair@stu.adamasuniversity.ac.in',
+    'priya.nair@example.com',
     'Priya Nair',
     'student',
     'demo1234',
     45,
   )
   const alex = makeUser(
-    'alex.rivera@stu.adamasuniversity.ac.in',
+    'alex.rivera@example.com',
     'Alex Rivera',
     'student',
     'demo1234',
@@ -520,16 +520,16 @@ export const demoApi = {
 
   async requestStudentOtp(email) {
     const normalized = normalizeEmail(email)
-    if (!isStudentEmail(normalized)) {
-      throw new Error(`Use your student Outlook email ending in ${STUDENT_EMAIL_SUFFIX}.`)
+    if (!isValidEmail(normalized)) {
+      throw new Error('Enter a valid email address.')
     }
     return { demoCode: DEMO_OTP_CODE }
   },
 
   async verifyStudentOtp(email, code) {
     const normalized = normalizeEmail(email)
-    if (!isStudentEmail(normalized)) {
-      throw new Error(`Use your student Outlook email ending in ${STUDENT_EMAIL_SUFFIX}.`)
+    if (!isValidEmail(normalized)) {
+      throw new Error('Enter a valid email address.')
     }
     if (String(code).trim() !== DEMO_OTP_CODE) {
       throw new Error('That code is incorrect. In demo mode the code is 123456.')

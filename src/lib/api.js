@@ -1,12 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { demoApi, subscribeTable as subscribeDemoTable } from './demo'
 import { prepareImage } from './images'
-import {
-  STUDENT_EMAIL_SUFFIX,
-  isStudentEmail,
-  normalizeEmail,
-  studentNameFromEmail,
-} from './auth-domain'
+import { isValidEmail, normalizeEmail, studentNameFromEmail } from './auth-domain'
 
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '').trim()
 const SUPABASE_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim()
@@ -106,8 +101,8 @@ export async function signIn(email, password) {
 
 export async function requestStudentOtp(email) {
   const normalized = normalizeEmail(email)
-  if (!isStudentEmail(normalized)) {
-    throw new Error(`Use your student Outlook email ending in ${STUDENT_EMAIL_SUFFIX}.`)
+  if (!isValidEmail(normalized)) {
+    throw new Error('Enter a valid email address.')
   }
   if (isDemoMode) return demoApi.requestStudentOtp(normalized)
 
@@ -129,8 +124,8 @@ export async function requestStudentOtp(email) {
 
 export async function verifyStudentOtp(email, token) {
   const normalized = normalizeEmail(email)
-  if (!isStudentEmail(normalized)) {
-    throw new Error(`Use your student Outlook email ending in ${STUDENT_EMAIL_SUFFIX}.`)
+  if (!isValidEmail(normalized)) {
+    throw new Error('Enter a valid email address.')
   }
   if (isDemoMode) return demoApi.verifyStudentOtp(normalized, token)
 

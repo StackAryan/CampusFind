@@ -4,8 +4,8 @@ import { MailCheck, ShieldCheck, Sparkles } from 'lucide-react'
 const points = [
   {
     icon: MailCheck,
-    title: 'Verified student email login',
-    body: 'Only @stu.adamasuniversity.ac.in Outlook accounts can request a one-time code.',
+    title: 'Verified email login',
+    body: 'Any email address can request a single-use sign-in link.',
   },
   {
     icon: Sparkles,
@@ -27,7 +27,7 @@ export default function AuthShell({ title, subtitle, children, footer }) {
           to="/"
           className="chip bg-moss-soft text-moss"
         >
-          CampusFind · verified student access
+          CampusFind · verified email access
         </Link>
         <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.02] tracking-tight xl:text-5xl">
           The campus board that
@@ -39,7 +39,7 @@ export default function AuthShell({ title, subtitle, children, footer }) {
         </h1>
         <p className="mt-4 max-w-md text-sm leading-relaxed text-ink/55">
           One shared place for lost and found reports, with smart matching,
-          admin-verified claims and one-time codes sent to official student emails.
+          admin-verified claims and one-time sign-in links sent to your email.
         </p>
 
         <ul className="mt-8 space-y-4">

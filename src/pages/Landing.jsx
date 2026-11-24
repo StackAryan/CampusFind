@@ -243,7 +243,7 @@ export default function Landing() {
                 <Cloud className="h-3.5 w-3.5 text-moss" /> Cloud-backed reports
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5 text-moss" /> Verified student emails
+                <Users className="h-3.5 w-3.5 text-moss" /> Verified email sign-in
               </span>
             </div>
 

@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   CheckCircle2,
   ChevronDown,
-  ExternalLink,
   MailCheck,
   RotateCw,
   ShieldCheck,
@@ -14,9 +13,8 @@ import { useAuth } from '../context/useAuth'
 import { isDemoMode, requestStudentOtp } from '../lib/api'
 import {
   DEMO_OTP_CODE,
-  STUDENT_EMAIL_SUFFIX,
-  UNIVERSITY_PORTAL_URL,
-  isStudentEmail,
+  DEMO_STUDENT_EMAIL,
+  isValidEmail,
   normalizeEmail,
 } from '../lib/auth-domain'
 import { toast } from '../lib/toast'
@@ -64,8 +62,8 @@ export default function StudentOtpForm() {
     setError('')
     setNotice('')
     const normalized = normalizeEmail(email)
-    if (!isStudentEmail(normalized)) {
-      setError(`Use your student Outlook email ending in ${STUDENT_EMAIL_SUFFIX}.`)
+    if (!isValidEmail(normalized)) {
+      setError('Enter a valid email address.')
       return
     }
 
@@ -101,14 +99,14 @@ export default function StudentOtpForm() {
     event.preventDefault()
     setError('')
     if (!/^\d{6}$/.test(code.trim())) {
-      setError('Enter the 6-digit code from your student email.')
+      setError('Enter the 6-digit code from your email.')
       return
     }
 
     setVerifying(true)
     try {
       await loginWithOtp(email, code.trim())
-      toast.success('Student email verified. Welcome to CampusFind.')
+      toast.success('Email verified. Welcome to CampusFind.')
     } catch (err) {
       setError(err.message || 'The code could not be verified. Please try again.')
     } finally {
@@ -351,7 +349,7 @@ export default function StudentOtpForm() {
     <form onSubmit={sendCode} className="space-y-4" noValidate>
       <div>
         <label htmlFor="student-email" className="label">
-          Student email
+          Email address
         </label>
         <div className="relative">
           <MailCheck className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/35" />
@@ -361,7 +359,7 @@ export default function StudentOtpForm() {
             autoComplete="email"
             inputMode="email"
             className="input pl-10"
-            placeholder={`you${STUDENT_EMAIL_SUFFIX}`}
+            placeholder="you@example.com"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             disabled={sending}
@@ -369,9 +367,8 @@ export default function StudentOtpForm() {
           />
         </div>
         <p className="mt-1.5 text-[11px] leading-relaxed text-ink/40">
-          Only Adamas student Outlook emails ending in{' '}
-          <span className="font-semibold text-ink/60">{STUDENT_EMAIL_SUFFIX}</span> can
-          sign in.
+          Use any email address you can access. We send a sign-in link to confirm it is
+          yours.
         </p>
       </div>
 
@@ -386,8 +383,7 @@ export default function StudentOtpForm() {
         <div className="rounded-xl border border-dashed border-line bg-gold-soft/50 px-3.5 py-2.5 text-[11px] leading-relaxed text-yellow-900">
           <span className="font-semibold">Demo mode:</span> no email is sent. Request a
           code, then use <span className="font-bold">{DEMO_OTP_CODE}</span>. The seeded
-          student is{' '}
-          <span className="font-semibold">avery.johnson{STUDENT_EMAIL_SUFFIX}</span>.
+          student is <span className="font-semibold">{DEMO_STUDENT_EMAIL}</span>.
         </div>
       )}
 
@@ -408,18 +404,6 @@ export default function StudentOtpForm() {
           ? 'Demo mode uses a fixed one-time code.'
           : 'We email a single-use sign-in link.'}
       </p>
-
-      <div className="border-t border-line pt-3 text-center">
-        <a
-          href={UNIVERSITY_PORTAL_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1 text-[11px] font-semibold text-ink/45 transition hover:text-moss hover:underline"
-        >
-          Manage your Adamas student account on the university portal
-          <ExternalLink className="h-3 w-3" />
-        </a>
-      </div>
     </form>
   )
 }
