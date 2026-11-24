@@ -174,8 +174,10 @@ Open **SQL Editor** in the Supabase dashboard and run the files in
    signup allowlist (kept for migration history; superseded by the next file).
 3. `20261124000000_allow_any_email.sql` — removes the domain restriction and allowlist so
    any valid email address can sign up.
+4. `20261124000001_grant_table_privileges.sql` — grants `authenticated` access to the app
+   tables so PostgREST does not return “permission denied for table …”.
 
-With the Supabase CLI, all three run automatically:
+With the Supabase CLI, all four run automatically:
 
 ```bash
 supabase link --project-ref <your-project-ref>
@@ -559,6 +561,11 @@ that lack the admin role.
 **I cannot access /admin after promoting myself.**
 The route reads the profile role. Sign out and sign back in so the profile is fetched again.
 Confirm the SQL update targeted the right `auth.users` email.
+
+**“permission denied for table profiles” (or items/claims/notifications).**
+The PostgREST roles are missing table grants. Run
+`supabase/migrations/20261124000001_grant_table_privileges.sql` in the Supabase SQL Editor.
+RLS policies still control which rows each user can access.
 
 **Claim submit fails with a permission/42501 error.**
 The item is no longer claimable (resolved or deleted), or you are trying to claim your own
