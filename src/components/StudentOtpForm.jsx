@@ -81,7 +81,7 @@ export default function StudentOtpForm() {
         setStep('link')
         setCode('')
         setNotice('')
-        toast.success('Sign-in link sent. Check your inbox.')
+        toast.success('Sign-in link sent. Check your inbox and spam folder.')
       }
     } catch (err) {
       setError(
@@ -225,8 +225,8 @@ export default function StudentOtpForm() {
                   disabled={verifying}
                 />
                 <p className="mt-1.5 text-[11px] text-ink/40">
-                  Only if your email includes a six-digit code. Never share it with
-                  anyone.
+                  Only if your email includes a six-digit code. If it does not arrive,
+                  check your spam or junk folder. Never share the code with anyone.
                 </p>
               </div>
 
@@ -368,7 +368,7 @@ export default function StudentOtpForm() {
         </div>
         <p className="mt-1.5 text-[11px] leading-relaxed text-ink/40">
           Use any email address you can access. We send a sign-in link to confirm it is
-          yours.
+          yours. If it does not arrive, check your spam or junk folder.
         </p>
       </div>
 
