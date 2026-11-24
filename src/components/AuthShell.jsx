@@ -63,7 +63,7 @@ export default function AuthShell({ title, subtitle, children, footer }) {
           <p className="text-xs leading-snug text-ink/55">
             <span className="font-semibold text-ink">Potential match found</span>
             <br />
-            Black earbuds · Main Library · 1 day apart
+            Black earbuds · CENTRAL LIBRARY · 1 day apart
           </p>
         </div>
       </div>

@@ -84,12 +84,12 @@ const weights = [
 const sampleLost = {
   category: 'Electronics',
   title: 'Black wireless earbuds',
-  location: 'Main Library',
+  location: 'CENTRAL LIBRARY',
 }
 const sampleFound = {
   category: 'Electronics',
   title: 'Black wireless earphones',
-  location: 'Main Library',
+  location: 'CENTRAL LIBRARY',
 }
 
 function ExampleMatchPanel({ compact = false }) {

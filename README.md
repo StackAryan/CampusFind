@@ -311,7 +311,7 @@ earphones found outside the library on Wednesday.
 ```text
 Same category (Electronics)          +30
 6 shared keywords                     +22
-Same location (Main Library)          +20
+Same location (CENTRAL LIBRARY)       +20
 Reported 1 day apart                  +15
 ------------------------------------------
 Total                                  87  → Strong match

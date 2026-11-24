@@ -102,9 +102,9 @@ function seed() {
     {
       title: 'Black wireless earbuds',
       description:
-        'Lost my black wireless earbuds in a white charging case near the library entrance. I think they slipped out of my tote bag around midday.',
+        'Lost my black wireless earbuds in a white charging case near the CENTRAL LIBRARY entrance. I think they slipped out of my tote bag around midday.',
       category: 'Electronics',
-      location: 'Main Library',
+      location: 'CENTRAL LIBRARY',
       event_date: dateDaysAgo(2),
     },
     2,
@@ -116,9 +116,9 @@ function seed() {
     {
       title: 'Black wireless earbuds',
       description:
-        'Found a pair of black wireless earbuds in a white charging case outside the library by the bike racks. Both earbuds were still inside.',
+        'Found a pair of black wireless earbuds in a white charging case outside CENTRAL LIBRARY by the bike racks. Both earbuds were still inside.',
       category: 'Electronics',
-      location: 'Main Library',
+      location: 'CENTRAL LIBRARY',
       event_date: dateDaysAgo(1),
     },
     1,
@@ -130,9 +130,9 @@ function seed() {
     {
       title: 'Student ID card',
       description:
-        'Lost my student ID somewhere between the library and the Student Center. The name on the card is Avery Johnson and it was on a blue lanyard.',
+        'Lost my student ID somewhere between CENTRAL LIBRARY and AKC FOOD COURT. The name on the card is Avery Johnson and it was on a blue lanyard.',
       category: 'ID & Cards',
-      location: 'Student Center',
+      location: 'AKC FOOD COURT',
       event_date: dateDaysAgo(5),
     },
     5,
@@ -144,9 +144,9 @@ function seed() {
     {
       title: 'Student ID card',
       description:
-        'Found a student ID card near the printing station at the Student Center. The name printed on it is Avery Johnson. It has a small scratch near the photo.',
+        'Found a student ID card near the printing station at AU - 1. The name printed on it is Avery Johnson. It has a small scratch near the photo.',
       category: 'ID & Cards',
-      location: 'Student Center',
+      location: 'AU - 1',
       event_date: dateDaysAgo(4),
     },
     4,
@@ -159,9 +159,9 @@ function seed() {
     {
       title: 'Blue Hydro Flask water bottle',
       description:
-        'Lost my blue Hydro Flask at the sports complex. It has a red National Park sticker and my initials PN scratched on the bottom.',
+        'Lost my blue Hydro Flask at SOET GROUND. It has a red National Park sticker and my initials PN scratched on the bottom.',
       category: 'Bottles',
-      location: 'Sports Complex',
+      location: 'SOET GROUND',
       event_date: dateDaysAgo(4),
     },
     4,
@@ -173,9 +173,9 @@ function seed() {
     {
       title: 'Blue Hydro Flask',
       description:
-        'Found a blue Hydro Flask near the gym courts. There is a red National Park sticker on the side and the initials PN on the bottom.',
+        'Found a blue Hydro Flask near the SOET GROUND courts. There is a red National Park sticker on the side and the initials PN on the bottom.',
       category: 'Bottles',
-      location: 'Sports Complex',
+      location: 'SOET GROUND',
       event_date: dateDaysAgo(3),
     },
     3,
@@ -188,9 +188,9 @@ function seed() {
     {
       title: 'Brown leather wallet',
       description:
-        'Lost my brown leather wallet, probably at the cafeteria during lunch. It has my student card, a bus pass and a small photo inside.',
+        'Lost my brown leather wallet, probably at AKC FOOD COURT during lunch. It has my student card, a bus pass and a small photo inside.',
       category: 'Wallets & Purses',
-      location: 'Cafeteria',
+      location: 'AKC FOOD COURT',
       event_date: dateDaysAgo(3),
     },
     3,
@@ -202,9 +202,9 @@ function seed() {
     {
       title: 'Brown leather wallet',
       description:
-        'Found a brown leather wallet on one of the tables at the cafeteria. I did not go through it. It is being kept safe until the owner claims it.',
+        'Found a brown leather wallet on one of the tables at AKC FOOD COURT. I did not go through it. It is being kept safe until the owner claims it.',
       category: 'Wallets & Purses',
-      location: 'Cafeteria',
+      location: 'AKC FOOD COURT',
       event_date: dateDaysAgo(2),
     },
     2,
@@ -216,9 +216,9 @@ function seed() {
     {
       title: 'Keys with a green lanyard',
       description:
-        'Lost my keys somewhere around Parking Lot B. Three keys on a green carabiner lanyard, including a small bike lock key.',
+        'Lost my keys somewhere around ADAMAS BUS STAND. Three keys on a green carabiner lanyard, including a small bike lock key.',
       category: 'Keys',
-      location: 'Parking Lot B',
+      location: 'ADAMAS BUS STAND',
       event_date: dateDaysAgo(6),
     },
     6,
@@ -230,9 +230,9 @@ function seed() {
     {
       title: 'Green lanyard keys',
       description:
-        'Found a set of keys with a green lanyard on the ground near Parking Lot B. There are three keys and a small bike lock key.',
+        'Found a set of keys with a green lanyard on the ground near ADAMAS BUS STAND. There are three keys and a small bike lock key.',
       category: 'Keys',
-      location: 'Parking Lot B',
+      location: 'ADAMAS BUS STAND',
       event_date: dateDaysAgo(5),
     },
     5,
@@ -244,9 +244,9 @@ function seed() {
     {
       title: 'Charcoal hoodie',
       description:
-        'Found a charcoal grey hoodie left on a bench at the sports complex. Size medium, with a small tear on the left sleeve.',
+        'Found a charcoal grey hoodie left on a bench at SOET GROUND. Size medium, with a small tear on the left sleeve.',
       category: 'Clothing',
-      location: 'Sports Complex',
+      location: 'SOET GROUND',
       event_date: dateDaysAgo(3),
     },
     3,
@@ -259,9 +259,9 @@ function seed() {
     {
       title: 'Casio scientific calculator',
       description:
-        'Lost my Casio scientific calculator in the Engineering Building, probably in room 204. The serial number ends in 4471.',
+        'Lost my Casio scientific calculator in AU - 6 SOET, probably in room 204. The serial number ends in 4471.',
       category: 'Electronics',
-      location: 'Engineering Building',
+      location: 'AU - 6 SOET',
       event_date: dateDaysAgo(7),
     },
     7,
@@ -273,9 +273,9 @@ function seed() {
     {
       title: 'Casio scientific calculator',
       description:
-        'Found a Casio scientific calculator in Engineering room 204. The serial number ends in 4471 and the name Priya is written inside.',
+        'Found a Casio scientific calculator in AU - 6 SOET room 204. The serial number ends in 4471 and the name Priya is written inside.',
       category: 'Electronics',
-      location: 'Engineering Building',
+      location: 'AU - 6 SOET',
       event_date: dateDaysAgo(6),
     },
     6,
