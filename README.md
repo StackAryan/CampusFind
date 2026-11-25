@@ -53,7 +53,7 @@ Open the printed URL (usually `http://localhost:5173`).
 
 The navbar shows a **Demo mode** chip, and the footer has a **Reset demo data** button that
 restores the original seed. Demo data is stored in `localStorage` under
-`campusfind_demo_v2`, and photos are compressed and stored as data URLs.
+`campusfind_demo_v3`, and photos are compressed and stored as data URLs.
 
 In demo mode no email is sent. The student login displays and accepts the fixed verification
 code **123456** for any valid email address. The administrator demo uses a normal
@@ -115,6 +115,8 @@ A good presentation flow:
   locations and claim decisions
 - Photo upload to Supabase Storage with client-side resizing/compression
 - “Smart check” panel on the report form that shows potential matches while you type
+- Required phone number or Instagram handle on every lost/found report, kept private from
+  the public board and shown to admins so they can connect the finder and owner
 - Realtime refreshes on listings, claims and notifications
 
 Remaining ideas for extra credit are listed in [Roadmap](#roadmap).
@@ -130,7 +132,7 @@ Remaining ideas for extra credit are listed in [Roadmap](#roadmap).
 | Supabase Storage | Item photos (`item-photos` bucket) |
 | Supabase Realtime | Live item, claim and notification updates |
 | Vercel | Static hosting with SPA rewrites |
-| Vitest | Unit tests for the match engine and auth helpers |
+| Vitest | Unit tests for the match engine, authentication and contact helpers |
 
 No UI component library is required; the design system lives in `src/index.css` and shared
 components.
@@ -176,8 +178,10 @@ Open **SQL Editor** in the Supabase dashboard and run the files in
    any valid email address can sign up.
 4. `20261124000001_grant_table_privileges.sql` — grants `authenticated` access to the app
    tables so PostgREST does not return “permission denied for table …”.
+5. `20261126000000_item_contacts.sql` — adds the private `item_contacts` table, RLS and the
+   atomic `create_item` RPC that requires a phone number or Instagram handle.
 
-With the Supabase CLI, all four run automatically:
+With the Supabase CLI, all five run automatically:
 
 ```bash
 supabase link --project-ref <your-project-ref>
@@ -337,6 +341,7 @@ store precomputed matches.
 | `profiles` | User display name, role (`student`/`admin`), join date. Email stays in `auth.users`. |
 | `items` | Lost/found reports with title, description, category, location, date, photo and status. |
 | `claims` | Ownership claims with pending/approved/rejected status, review note and reviewer. |
+| `item_contacts` | Private phone or Instagram contact for each report; readable only by the reporter and admins. |
 | `notifications` | In-app notifications with read state and deep link. |
 
 Item statuses: `open` → `in_review` (a claim exists) → `resolved` (recovered).
@@ -375,6 +380,9 @@ RLS is enabled on every public table:
   inserts must use the caller's own user id.
 - **Claims:** visible only to the claimant and admins. Students can claim only found,
   unresolved items that they do not own. Only admins can review claims.
+- **Item contacts:** a report's phone/Instagram contact is stored outside `items`, so it is
+  never included in public item reads or Realtime item payloads. Only the reporter and admins
+  can read it; the `create_item` RPC writes the item and its contact in one transaction.
 - **Notifications:** each user can read and mark only their own notifications.
 - **Storage:** uploads/deletes must be inside a folder named after the caller's user id.
   The bucket is public-read for simple image URLs.
@@ -404,6 +412,8 @@ campus-lost-found/
 │   │   ├── demo.js        # Seeded localStorage backend for demo mode
 │   │   ├── auth-domain.js # Email normalization and validation helpers
 │   │   ├── auth-domain.test.js
+│   │   ├── contact.js     # Phone/Instagram validation and links
+│   │   ├── contact.test.js
 │   │   ├── matching.js    # Potential Match Engine (pure functions)
 │   │   ├── matching.test.js
 │   │   ├── categories.js  # Categories, locations, badges, icons
@@ -417,7 +427,10 @@ campus-lost-found/
 ├── supabase/
 │   └── migrations/
 │       ├── 20260101000000_init.sql
-│       └── 20261122000000_student_email_verification.sql
+│       ├── 20261122000000_student_email_verification.sql
+│       ├── 20261124000000_allow_any_email.sql
+│       ├── 20261124000001_grant_table_privileges.sql
+│       └── 20261126000000_item_contacts.sql
 ├── .env.example
 ├── eslint.config.js
 ├── vercel.json            # SPA rewrite
@@ -449,6 +462,7 @@ The match engine and student-email helpers have unit tests covering:
 - acceptance of normal email addresses
 - rejection of malformed addresses
 - display-name derivation from email addresses
+- phone and Instagram contact validation and link formatting
 
 ```bash
 npm test
@@ -460,8 +474,9 @@ Manual smoke-test checklist:
 - [ ] Request a link with any normal email address, open it, and confirm you land signed in
 - [ ] Sign in with an email and the demo code, then sign out and back in
 - [ ] Sign in through the Administrator tab with the admin account
-- [ ] Report a lost item with and without a photo
+- [ ] Report a lost item with and without a photo; confirm a phone/Instagram contact is required
 - [ ] Report a found item; verify it appears on Browse
+- [ ] Open a report as its owner or as the admin and confirm the contact is visible
 - [ ] Search and filter by type, category, location and date
 - [ ] Open a found item and submit a claim (20+ characters)
 - [ ] Confirm the item shows “Claim pending” and the finder gets a notification
@@ -586,7 +601,7 @@ run the rest, or ignore the error if the tables are already published.
 
 **Reset demo data.**
 Use the footer button (demo mode only), or run
-`localStorage.removeItem('campusfind_demo_v2')` in the browser console and reload.
+`localStorage.removeItem('campusfind_demo_v3')` in the browser console and reload.
 
 ## Limitations
 

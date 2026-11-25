@@ -4,9 +4,11 @@ import {
   AlertCircle,
   ArrowLeft,
   CalendarDays,
+  AtSign,
   Lightbulb,
   MapPin,
   Package,
+  Phone,
   Search,
   Sparkles,
   Tag,
@@ -17,6 +19,7 @@ import PhotoUpload from '../components/PhotoUpload'
 import { Spinner } from '../components/Loading'
 import { useAuth } from '../context/useAuth'
 import { CATEGORY_VALUES, LOCATIONS } from '../lib/categories'
+import { CONTACT_META, normalizeContact } from '../lib/contact'
 import { createItem, listItems } from '../lib/api'
 import { findMatches } from '../lib/matching'
 import { todayISO } from '../lib/utils'
@@ -54,6 +57,8 @@ export default function Report() {
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState('')
   const [eventDate, setEventDate] = useState(todayISO())
+  const [contactMethod, setContactMethod] = useState('phone')
+  const [contactValue, setContactValue] = useState('')
   const [imageFile, setImageFile] = useState(null)
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState('')
@@ -108,6 +113,8 @@ export default function Report() {
     if (description.trim().length < 10) {
       next.description = 'Add at least 10 characters so others can recognise the item.'
     }
+    const contact = normalizeContact(contactMethod, contactValue)
+    if (!contact.valid) next.contact = contact.error
     return next
   }
 
@@ -123,6 +130,7 @@ export default function Report() {
 
     setSubmitting(true)
     try {
+      const contact = normalizeContact(contactMethod, contactValue)
       const item = await createItem({
         type,
         title,
@@ -130,6 +138,8 @@ export default function Report() {
         description,
         location,
         event_date: eventDate,
+        contact_method: contact.method,
+        contact_value: contact.value,
         imageFile,
       })
       toast.success(
@@ -291,6 +301,79 @@ export default function Report() {
                 <span className="ml-auto mt-1 text-[10px] text-ink/30">
                   {description.length}/2000
                 </span>
+              </div>
+            </div>
+
+            <div className="border-t border-line pt-6">
+              <h2 className="font-display text-lg font-bold tracking-tight">
+                Contact for the admin
+              </h2>
+              <p className="mt-0.5 text-xs text-ink/45">
+                Required. Only you and administrators can see this. It is used to connect the
+                finder and the owner once a claim is verified.
+              </p>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-[11rem_1fr]">
+                <div>
+                  <span className="label">Contact method</span>
+                  <div
+                    className="grid grid-cols-2 gap-1 rounded-xl border border-line bg-cream/60 p-1"
+                    role="group"
+                    aria-label="Contact method"
+                  >
+                    {['phone', 'instagram'].map((method) => {
+                      const selected = contactMethod === method
+                      const Icon = method === 'phone' ? Phone : AtSign
+                      return (
+                        <button
+                          key={method}
+                          type="button"
+                          aria-pressed={selected}
+                          onClick={() => {
+                            if (method === contactMethod) return
+                            setContactMethod(method)
+                            setContactValue('')
+                            setErrors((current) => {
+                              const next = { ...current }
+                              delete next.contact
+                              return next
+                            })
+                          }}
+                          disabled={submitting}
+                          className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold transition ${
+                            selected
+                              ? 'bg-ink text-cream shadow-sm'
+                              : 'text-ink/55 hover:bg-white'
+                          }`}
+                        >
+                          <Icon className="h-3.5 w-3.5" />
+                          {CONTACT_META[method].label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="contactValue" className="label">
+                    {CONTACT_META[contactMethod].fieldLabel}
+                  </label>
+                  <input
+                    id="contactValue"
+                    type={contactMethod === 'phone' ? 'tel' : 'text'}
+                    inputMode={contactMethod === 'phone' ? 'tel' : 'text'}
+                    autoComplete={contactMethod === 'phone' ? 'tel' : 'off'}
+                    className="input"
+                    placeholder={CONTACT_META[contactMethod].placeholder}
+                    value={contactValue}
+                    maxLength={80}
+                    onChange={(event) => setContactValue(event.target.value)}
+                    disabled={submitting}
+                  />
+                  <FieldError>{errors.contact}</FieldError>
+                  <p className="mt-1 text-[10px] leading-relaxed text-ink/35">
+                    Never shown on the public board. Only you and administrators can read it.
+                  </p>
+                </div>
               </div>
             </div>
 

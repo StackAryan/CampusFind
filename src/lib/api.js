@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { demoApi, subscribeTable as subscribeDemoTable } from './demo'
 import { prepareImage } from './images'
 import { isValidEmail, normalizeEmail, studentNameFromEmail } from './auth-domain'
+import { normalizeContact } from './contact'
 
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '').trim()
 const SUPABASE_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim()
@@ -173,6 +174,9 @@ export async function getItem(id) {
 }
 
 export async function createItem(payload) {
+  const contact = normalizeContact(payload.contact_method, payload.contact_value)
+  if (!contact.valid) throw new Error(contact.error)
+
   const { imageFile, ...fields } = payload
   const user = await requireUser()
 
@@ -192,24 +196,52 @@ export async function createItem(payload) {
       event_date: fields.event_date,
       type: fields.type,
       image_url,
+      contact_method: contact.method,
+      contact_value: contact.value,
     })
   }
 
-  const { data, error } = await supabase
-    .from('items')
-    .insert({
-      user_id: user.id,
-      type: fields.type,
-      title: fields.title.trim(),
-      description: fields.description.trim(),
-      category: fields.category,
-      location: fields.location,
-      event_date: fields.event_date,
-      image_url,
-    })
-    .select(ITEM_SELECT)
-    .single()
+  const { data: itemId, error } = await supabase.rpc('create_item', {
+    p_type: fields.type,
+    p_title: fields.title.trim(),
+    p_description: fields.description.trim(),
+    p_category: fields.category,
+    p_location: fields.location,
+    p_event_date: fields.event_date,
+    p_image_url: image_url,
+    p_contact_method: contact.method,
+    p_contact_value: contact.value,
+  })
   if (error) fail(error, 'Your report could not be saved. Please try again.')
+
+  const { data, error: fetchError } = await supabase
+    .from('items')
+    .select(ITEM_SELECT)
+    .eq('id', itemId)
+    .single()
+  if (fetchError) fail(fetchError, 'Your report was saved but could not be loaded.')
+  return data
+}
+
+export async function listItemContacts() {
+  if (isDemoMode) return demoApi.listItemContacts()
+  await requireUser()
+  const { data, error } = await supabase
+    .from('item_contacts')
+    .select('item_id, contact_method, contact_value')
+  if (error) fail(error, 'Contact details could not be loaded.')
+  return data ?? []
+}
+
+export async function getItemContact(itemId) {
+  if (isDemoMode) return demoApi.getItemContact(itemId)
+  await requireUser()
+  const { data, error } = await supabase
+    .from('item_contacts')
+    .select('item_id, contact_method, contact_value')
+    .eq('item_id', itemId)
+    .maybeSingle()
+  if (error) fail(error, 'Contact details could not be loaded.')
   return data
 }
 

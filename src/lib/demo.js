@@ -5,8 +5,9 @@ import {
   normalizeEmail,
   studentNameFromEmail,
 } from './auth-domain'
+import { normalizeContact } from './contact'
 
-const DB_KEY = 'campusfind_demo_v2'
+const DB_KEY = 'campusfind_demo_v3'
 const SESSION_KEY = 'campusfind_demo_session'
 
 let db = null
@@ -85,6 +86,16 @@ function seed() {
 
   const users = [admin, avery, maya, jordan, sam, priya, alex]
 
+  const contactForUser = {
+    [admin.id]: { contact_method: 'phone', contact_value: '+91 98300 00000' },
+    [avery.id]: { contact_method: 'instagram', contact_value: 'avery.johnson' },
+    [maya.id]: { contact_method: 'phone', contact_value: '+91 98300 11223' },
+    [jordan.id]: { contact_method: 'phone', contact_value: '+91 98300 44556' },
+    [sam.id]: { contact_method: 'instagram', contact_value: 'sam.patel' },
+    [priya.id]: { contact_method: 'phone', contact_value: '+91 98300 77889' },
+    [alex.id]: { contact_method: 'instagram', contact_value: 'alex.rivera' },
+  }
+
   const item = (owner, type, fields, daysAgo, status = 'open') => ({
     id: uuid(),
     user_id: owner.id,
@@ -93,6 +104,7 @@ function seed() {
     image_url: null,
     created_at: isoDaysAgo(daysAgo, 2),
     updated_at: isoDaysAgo(daysAgo, 1),
+    ...contactForUser[owner.id],
     ...fields,
   })
 
@@ -454,8 +466,11 @@ function publicUser(user) {
 
 function hydrateItem(item) {
   if (!item) return null
+  const publicItem = { ...item }
+  delete publicItem.contact_method
+  delete publicItem.contact_value
   const owner = getDb().users.find((user) => user.id === item.user_id)
-  return { ...item, owner: publicUser(owner) }
+  return { ...publicItem, owner: publicUser(owner) }
 }
 
 function hydrateClaim(claim) {
@@ -573,8 +588,38 @@ export const demoApi = {
     return hydrateItem(getDb().items.find((item) => item.id === id))
   },
 
+  async getItemContact(itemId) {
+    const user = currentUser({ required: true })
+    const item = getDb().items.find((candidate) => candidate.id === itemId)
+    if (!item?.contact_method || !item?.contact_value) return null
+    if (item.user_id !== user.id && user.role !== 'admin') return null
+    return {
+      item_id: item.id,
+      contact_method: item.contact_method,
+      contact_value: item.contact_value,
+    }
+  },
+
+  async listItemContacts() {
+    const user = currentUser({ required: true })
+    return getDb()
+      .items.filter(
+        (item) =>
+          item.contact_method &&
+          item.contact_value &&
+          (item.user_id === user.id || user.role === 'admin'),
+      )
+      .map((item) => ({
+        item_id: item.id,
+        contact_method: item.contact_method,
+        contact_value: item.contact_value,
+      }))
+  },
+
   async createItem(payload) {
     const user = currentUser({ required: true })
+    const contact = normalizeContact(payload.contact_method, payload.contact_value)
+    if (!contact.valid) throw new Error(contact.error)
     const data = getDb()
     const now = new Date().toISOString()
     const item = {
@@ -587,6 +632,8 @@ export const demoApi = {
       location: payload.location,
       event_date: payload.event_date,
       image_url: payload.image_url ?? null,
+      contact_method: contact.method,
+      contact_value: contact.value,
       status: 'open',
       created_at: now,
       updated_at: now,

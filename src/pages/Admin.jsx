@@ -24,11 +24,13 @@ import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import EmptyState from '../components/EmptyState'
 import { ClaimStatusBadge, StatusBadge, TypeBadge } from '../components/Badges'
+import ContactLink from '../components/ContactLink'
 import { PageLoader, Spinner } from '../components/Loading'
 import { useAuth } from '../context/useAuth'
 import {
   deleteItem,
   listAllClaims,
+  listItemContacts,
   listItems,
   listProfiles,
   reviewClaim,
@@ -50,6 +52,7 @@ export default function Admin() {
   const [items, setItems] = useState([])
   const [claims, setClaims] = useState([])
   const [profiles, setProfiles] = useState([])
+  const [contacts, setContacts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [tab, setTab] = useState('overview')
@@ -67,15 +70,17 @@ export default function Admin() {
 
   const load = useCallback(async () => {
     try {
-      const [allItems, allClaims, allProfiles] = await Promise.all([
+      const [allItems, allClaims, allProfiles, allContacts] = await Promise.all([
         listItems(),
         listAllClaims(),
         listProfiles(),
+        listItemContacts(),
       ])
       setError('')
       setItems(allItems)
       setClaims(allClaims)
       setProfiles(allProfiles)
+      setContacts(allContacts)
     } catch (err) {
       setError(err.message || 'Could not load the admin dashboard.')
     } finally {
@@ -105,6 +110,29 @@ export default function Admin() {
       recoveryRate: items.length ? Math.round((resolved / items.length) * 100) : 0,
     }
   }, [items, claims])
+
+  const contactByItem = useMemo(
+    () => new Map(contacts.map((contact) => [contact.item_id, contact])),
+    [contacts],
+  )
+
+  const profileById = useMemo(
+    () => new Map(profiles.map((profile) => [profile.id, profile])),
+    [profiles],
+  )
+
+  const latestContactByUser = useMemo(() => {
+    const map = new Map()
+    const sorted = items
+      .slice()
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    for (const item of sorted) {
+      if (map.has(item.user_id)) continue
+      const contact = contactByItem.get(item.id)
+      if (contact) map.set(item.user_id, contact)
+    }
+    return map
+  }, [items, contactByItem])
 
   const categoryData = useMemo(() => {
     const rows = CATEGORY_VALUES.map((category) => ({
@@ -143,19 +171,21 @@ export default function Admin() {
   )
 
   const visibleItems = useMemo(() => {
-    const query = itemSearch.trim().toLowerCase()
+    const query = itemSearch.trim().toLowerCase().replace(/^@/, '')
     return items
       .filter((item) => {
         if (itemType !== 'all' && item.type !== itemType) return false
         if (itemStatus !== 'all' && item.status !== itemStatus) return false
         if (query) {
-          const haystack = `${item.title} ${item.description} ${item.owner?.full_name || ''} ${item.location}`.toLowerCase()
+          const contact = contactByItem.get(item.id)
+          const contactText = contact ? `${contact.contact_value} ${contact.contact_value.replace(/[^\dA-Za-z]/g, '')}` : ''
+          const haystack = `${item.title} ${item.description} ${item.owner?.full_name || ''} ${item.location} ${contactText}`.toLowerCase()
           if (!haystack.includes(query)) return false
         }
         return true
       })
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-  }, [items, itemSearch, itemType, itemStatus])
+  }, [items, itemSearch, itemType, itemStatus, contactByItem])
 
   const recentItems = useMemo(
     () =>
@@ -575,6 +605,15 @@ export default function Admin() {
                           {claim.item?.location} ·{' '}
                           {claim.item ? formatDate(claim.item.event_date) : '—'}
                         </p>
+                        {claim.item && contactByItem.get(claim.item.id) && (
+                          <p className="mt-0.5 text-[10px] text-ink/45">
+                            <span className="text-ink/35">Finder:</span>{' '}
+                            <ContactLink
+                              contact={contactByItem.get(claim.item.id)}
+                              showLabel={false}
+                            />
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -587,6 +626,16 @@ export default function Admin() {
                         <p className="truncate text-xs font-semibold">
                           {claim.claimant?.full_name || 'Unknown student'}
                         </p>
+                        <p className="truncate text-[10px] text-ink/40">
+                          {profileById.get(claim.claimant?.id)?.email || 'Email unavailable'}
+                        </p>
+                        {latestContactByUser.get(claim.claimant?.id) && (
+                          <ContactLink
+                            contact={latestContactByUser.get(claim.claimant?.id)}
+                            showLabel={false}
+                            className="mt-0.5 !text-[10px]"
+                          />
+                        )}
                       </div>
                     </div>
 
@@ -631,7 +680,7 @@ export default function Admin() {
                 value={itemSearch}
                 onChange={(event) => setItemSearch(event.target.value)}
                 className="input pl-10"
-                placeholder="Search reports by title, student or location…"
+                placeholder="Search reports by title, student, contact or location…"
               />
             </div>
             <select
@@ -687,6 +736,12 @@ export default function Admin() {
                     <p className="truncate text-[11px] text-ink/45">
                       {item.owner?.full_name} · {item.location} · {formatDate(item.event_date)}
                     </p>
+                    {contactByItem.get(item.id) && (
+                      <p className="mt-0.5 text-[10px] text-ink/45">
+                        <span className="text-ink/35">Contact:</span>{' '}
+                        <ContactLink contact={contactByItem.get(item.id)} showLabel={false} />
+                      </p>
+                    )}
                   </div>
                   <div className="flex shrink-0 items-center gap-1.5">
                     <Link
@@ -853,6 +908,48 @@ export default function Admin() {
                 <ClaimStatusBadge status={reviewOpen.status} className="ml-auto" />
               </div>
             </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl bg-cream/70 p-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/35">
+                  Finder contact
+                </p>
+                {contactByItem.get(reviewOpen.item?.id) ? (
+                  <ContactLink
+                    contact={contactByItem.get(reviewOpen.item?.id)}
+                    className="mt-1"
+                  />
+                ) : (
+                  <p className="mt-1 text-[11px] text-ink/40">
+                    No contact saved for this report.
+                  </p>
+                )}
+              </div>
+              <div className="rounded-xl bg-cream/70 p-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/35">
+                  Claimant contact
+                </p>
+                <p className="mt-1 truncate text-[11px] text-ink/55">
+                  {profileById.get(reviewOpen.claimant?.id)?.email || 'Email unavailable'}
+                </p>
+                {latestContactByUser.get(reviewOpen.claimant?.id) ? (
+                  <>
+                    <p className="mt-1 text-[10px] text-ink/35">From their latest report</p>
+                    <ContactLink
+                      contact={latestContactByUser.get(reviewOpen.claimant?.id)}
+                      className="mt-0.5"
+                    />
+                  </>
+                ) : (
+                  <p className="mt-0.5 text-[10px] text-ink/40">
+                    No phone or Instagram on their reports.
+                  </p>
+                )}
+              </div>
+            </div>
+            <p className="text-[11px] leading-relaxed text-ink/45">
+              Use these details to connect the finder and the claimant after the decision.
+            </p>
 
             <blockquote className="rounded-xl border-l-2 border-gold bg-gold-soft/40 px-4 py-3 text-sm leading-relaxed text-ink/70">
               “{reviewOpen.message}”

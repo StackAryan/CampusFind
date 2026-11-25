@@ -18,6 +18,7 @@ import {
 import ItemVisual from '../components/ItemVisual'
 import { ClaimStatusBadge, StatusBadge, TypeBadge } from '../components/Badges'
 import Avatar from '../components/Avatar'
+import ContactLink from '../components/ContactLink'
 import EmptyState from '../components/EmptyState'
 import MatchCard from '../components/MatchCard'
 import ConfirmDialog from '../components/ConfirmDialog'
@@ -27,6 +28,7 @@ import {
   createClaim,
   deleteItem,
   getItem,
+  getItemContact,
   getMyClaims,
   listItems,
   subscribeTable,
@@ -52,6 +54,7 @@ export default function ItemDetail() {
   const [myClaims, setMyClaims] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [contact, setContact] = useState(null)
 
   const [claimMessage, setClaimMessage] = useState('')
   const [claimError, setClaimError] = useState('')
@@ -98,6 +101,26 @@ export default function ItemDetail() {
   const isAdmin = user?.role === 'admin'
   const myClaim = item ? getMyLatestClaim(myClaims, item.id) : null
   const pendingClaim = myClaim?.status === 'pending' ? myClaim : null
+
+  const itemId = item?.id
+
+  useEffect(() => {
+    if (!itemId || !(isOwner || isAdmin)) {
+      setContact(null)
+      return
+    }
+    let active = true
+    getItemContact(itemId)
+      .then((value) => {
+        if (active) setContact(value)
+      })
+      .catch(() => {
+        if (active) setContact(null)
+      })
+    return () => {
+      active = false
+    }
+  }, [itemId, isOwner, isAdmin])
 
   const matches = useMemo(() => {
     if (!item || item.status === 'resolved') return []
@@ -282,6 +305,26 @@ export default function ItemDetail() {
                 </div>
                 <ShieldCheck className="ml-auto h-4 w-4 shrink-0 text-moss/50" />
               </div>
+
+              {(isOwner || isAdmin) && contact && (
+                <div className="mt-3 rounded-xl border border-line bg-white px-4 py-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/35">
+                        {isAdmin && !isOwner
+                          ? 'Reporter contact · admin only'
+                          : 'Your contact for this report'}
+                      </p>
+                      <ContactLink contact={contact} className="mt-1" />
+                    </div>
+                    <ShieldCheck className="h-4 w-4 text-moss/40" />
+                  </div>
+                  <p className="mt-1 text-[10px] leading-relaxed text-ink/35">
+                    Private. Admins use this to connect the finder and the owner after a claim
+                    is verified.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
